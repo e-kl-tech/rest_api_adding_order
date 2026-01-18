@@ -1,0 +1,27 @@
+api_setting:
+  title: "Order Management API"
+  description: |
+    REST API сервис для управления заказами.
+    
+    ## Основной функционал
+    
+    * **Добавление товара в заказ** - метод `/api/orders/add-item`
+      - Автоматическое увеличение количества, если товар уже в заказе
+      - Проверка наличия товара на складе
+      - Валидация входных данных
+  version: 0.0.0.1
+  docs_url: "/docs"
+  redoc_url: "/redoc"
+engine:
+  pool_pre_ping: True
+  pool_size: 10
+  max_overflow: 20
+  connect_args:
+   connect_timeout: 10
+database:
+  name: orders_db
+  database_url: postgresql+psycopg2://postgres@db:5432/orders_db
+logger:
+  level: INFO
+  format: "%(asctime)s | %(name)s | %(filename)s:%(lineno)d | %(levelname)-8s | %(message)s"
+  datefmt: "%Y-%m-%d %X"
