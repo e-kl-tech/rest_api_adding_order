@@ -1,0 +1,152 @@
+Таблица: categories
+	Описание: Категорий неограниченной вложенности.
+	Атрибуты:
+		id (PRIMARY KEY) — Первичный ключ (Integer: SERIAL/AUTO_INCREMENT).
+		name — Наименование категории (например, "Бытовая техника", "Холодильники").
+		parent_id (FOREIGN KEY) — Ссылка на ID этой же таблицы. Если NULL — категория корневая.
+		updated_at - Дата обновления информации (Timestamp/DateTime).
+	Связи: Одна категория может иметь много дочерних категорий (1:M).
+
+=========================================================
+Таблица: products
+	Описание: Основной справочник номенклатуры товаров.
+	Атрибуты:
+		id (PRIMARY KEY) — Первичный ключ (Integer: SERIAL/AUTO_INCREMENT).
+		category_id (FOREIGN KEY) — Ссылка на ID таблицы Categories.
+		name — Наименование товара (String).
+		quantity — Текущий остаток на складе (Integer).
+		price — Текущая розничная цена (Decimal).
+	Связи: Одна категория содержит много товаров (1:M).
+
+=========================================================
+Таблица: clients
+	Описание: Справочник зарегистрированных покупателей.
+	Атрибуты:
+		id (PRIMARY KEY) — Первичный ключ (Integer: SERIAL/AUTO_INCREMENT).
+		name — ФИО клиента или название организации (String).
+		address — Юридический или фактический адрес (String).
+	Связи: Один клиент может совершить много заказов (1:M).
+
+=========================================================
+Вспомогательные таблицы-справочники (Словари):
+Таблица: order_statuses
+	Описание: Справочник состояний заказа.
+	Атрибуты:
+		id (PRIMARY KEY) — Первичный ключ (Integer: SERIAL/AUTO_INCREMENT).
+		code — Код состояния заказа (Integer).
+		name — Наименование состояния заказа (String).
+		
+Таблица: order_priorities
+	Описание: Справочник приоритетов заказа.
+	Атрибуты:
+		id (PRIMARY KEY) — Первичный ключ (Integer: SERIAL/AUTO_INCREMENT).
+		code — Код приоритета заказа (Integer).
+		name — Наименование приоритета заказа (String).
+		
+Таблица: payment_methods
+	Описание: Справочник способов оплаты заказа.
+	Атрибуты:
+		id (PRIMARY KEY) — Первичный ключ (Integer: SERIAL/AUTO_INCREMENT).
+		code — Код способа оплаты (Integer).
+		name — Наименование способа оплаты (String).
+		
+Таблица: payment_statuses
+	Описание: Справочник состояний оплаты заказа.
+	Атрибуты:
+		id (PRIMARY KEY) — Первичный ключ (Integer: SERIAL/AUTO_INCREMENT).
+		code — Код состояния оплаты (Integer).
+		name — Наименование состояния оплаты (String).
+
+Таблица: delivery_types
+	Описание: Справочник типов доставки заказа.
+	Атрибуты:
+		id (PRIMARY KEY) — Первичный ключ (Integer: SERIAL/AUTO_INCREMENT).
+		code — Код типа доставки (Integer).
+		name — Наименование типа доставки (String).
+		has_address — Признак необходимости указания адреса доставки (Boolean).
+	Связи: Используется в таблице заказов (1:M).
+
+Таблица: order_sources
+	Описание: Справочник источников оформления заказа.
+	Атрибуты:
+		id (PRIMARY KEY) — Первичный ключ (Integer: SERIAL/AUTO_INCREMENT).
+		code — Код источника заказа.
+		name — Наименование источника заказа.
+	Связи: Используется в таблице заказов (1:M).
+
+=========================================================
+Таблица: orders
+	Описание: Центральный узел системы заказов, консолидирующий финансовые и логистические данные.
+	Атрибуты:
+		id (PRIMARY KEY) — Первичный ключ (Integer: SERIAL/AUTO_INCREMENT).
+		customer_id (FOREIGN KEY) — Ссылка на ID таблицы Clients.
+		order_number — Уникальный строковый номер заказа (String).
+		subtotal — Сумма без скидок (Decimal).
+		discount_amount — Общая сумма скидки (Decimal).
+		tax_amount — Сумма налогов (Decimal).
+		shipping_amount — Стоимость доставки (Decimal).
+		total_amount — Итоговая сумма к оплате (Decimal).
+		paid_amount — Фактически оплаченная сумма (Decimal).
+		delivery_address, City, Zipcode — Данные адреса доставки (JSONB/String).
+		recipient_name, phone, email — Контактные данные получателя (JSONB/String).
+		tracking_number — Номер отслеживания посылки (String).
+		order_date — Бизнес-дата совершения заказа (Timestamp/DateTime).
+		created_at — Дата/время создания записи (Timestamp/DateTime).
+		updated_at — Дата/время последнего изменения (Timestamp/DateTime).
+		Внешние ключи справочников (FOREIGN KEY): 
+		  status_id, priority_id, payment_method_id, payment_status_id, 
+		  delivery_type_id, source_id.
+	Связи: Один заказ включает много позиций из Order_Items (1:M).
+
+=========================================================
+Таблица: order_items
+	Описание: Позиции заказа. Позволяет включать разный набор товаров в один заказ.
+	Атрибуты:
+		id (PRIMARY KEY) — Первичный ключ (Integer: SERIAL/AUTO_INCREMENT).
+		order_id (FOREIGN KEY) — Ссылка на ID таблицы Orders.
+		product_id (FOREIGN KEY) — Ссылка на ID таблицы Products.
+		product_name — Данные товара на момент заказа (для истории) (JSONB/String).
+		quantity — Количество товара (Integer).
+		unit_price — Цена за единицу на момент заказа (Decimal).
+		discount_percent — Скидка на позицию в % (Integer).
+		discount_amount — Вычисленная сумма скидки на позицию (Decimal).
+		total_price — Итоговая цена позиции (Decimal).
+		variant — Характеристики (цвет, размер) в формате (JSONB/String).
+	Связи: Связывает товары и заказы (N:M через данную таблицу).
+
+=========================================================
+Таблица: payments
+	Описание: История транзакций (платежей) по конкретному заказу.
+	Атрибуты:
+		id (PRIMARY KEY) — Первичный ключ (Integer: SERIAL/AUTO_INCREMENT).
+		order_id (FOREIGN KEY) — Ссылка на ID таблицы Orders.
+		payment_method_id (FOREIGN KEY) — Ссылка на метод оплаты из справочника.
+		transaction_id — Номер транзакции (String).
+		amount — Сумма транзакции (Decimal).
+		status — Статус транзакции (JSONB/String).
+		created_at — Дата и время совершения платежа (Timestamp/DateTime).
+	Связи: Один заказ может иметь несколько транзакций (1:M).
+
+=========================================================
+Таблица: order_status_history
+	Описание: Лог изменений статусов заказа для контроля этапов обработки.
+	Атрибуты:
+		id (PRIMARY KEY) — Первичный ключ (Integer: SERIAL/AUTO_INCREMENT).
+		order_id (FOREIGN KEY) — Ссылка на ID таблицы Orders.
+		status_id (FOREIGN KEY) — Ссылка на новый статус из справочника.
+		changed_by — Идентификатор пользователя (String).
+		notes — Дополнительный текстовый комментарий (String).
+		changed_at — Точное время изменения статуса (Timestamp/DateTime).
+	Связи: Один заказ имеет длинную историю изменений (1:M).
+
+=========================================================
+Таблица: order_comments
+	Описание: Заметки менеджеров, системные логи и переписка с клиентом.
+	Атрибуты:
+		id (PRIMARY KEY) — Первичный ключ (Integer: SERIAL/AUTO_INCREMENT).
+		order_id (FOREIGN KEY) — Ссылка на ID таблицы Orders.
+		author_name — Имя автора комментария (String).
+		comment_text — Текст комментария (Text).
+		is_internal — Флаг видимости (Boolean).
+		created_at — Дата и время добавления комментария (Timestamp/DateTime).
+	Связи: Один заказ может сопровождаться множеством комментариев (1:M).
